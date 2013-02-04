@@ -6,7 +6,7 @@ require 'rest_client'
 module OmniAuth
   module Polaris
     class Adaptor
-      class LdapError < StandardError; end
+      class PolarisError < StandardError; end
       class ConfigurationError < StandardError; end
       class AuthenticationError < StandardError; end
       class ConnectionError < StandardError; end

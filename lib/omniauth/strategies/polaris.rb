@@ -35,7 +35,7 @@ module OmniAuth
           @user_info = self.class.map_user(@@config, @polaris_user_info)
           super
         rescue Exception => e
-          return fail!(:ldap_error, e)
+          return fail!(:polaris_error, e)
         end
       end
 
