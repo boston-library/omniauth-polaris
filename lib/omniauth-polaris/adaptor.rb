@@ -55,7 +55,12 @@ module OmniAuth
         barcode = args[:barcode]
         http_date = Time.now.in_time_zone("GMT").strftime("%a, %d %b %Y %H:%M:%S %Z")
         puts "here4"
-        concated_string = @config[:http_method] + @config[:http_uri] + barcode + @config[:http_date] + pin
+        puts @http_method
+        puts @config[:http_method]
+        puts @config[:http_uri]
+        puts barcode
+
+        concated_string = @config[:http_method] + @config[:http_uri] + barcode + http_date + pin
         sha1_sig = Base64.strict_encode64("#{OpenSSL::HMAC.digest('sha1',@access_key, concated_string)}")
         puts "here5"
         xml_response = RestClient.get http_uri, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @config[:access_id] + ":" + sha1_sig}
