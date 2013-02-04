@@ -46,17 +46,7 @@ module OmniAuth
 
       end
 
-      private
-      def ensure_method(method)
-        method ||= "get"
-        normalized_method = method.to_s.upcase.to_sym
-        return METHOD[normalized_method] if METHOD.has_key?(normalized_method)
-
-        available_methods = METHOD.keys.collect {|m| m.inspect}.join(", ")
-        format = "%s is not one of the available connect methods: %s"
-        raise ConfigurationError, format % [method.inspect, available_methods]
-      end
-
+      public
       def bind_as(args = {})
         response = false
         pin = args[:pin]
@@ -71,6 +61,19 @@ module OmniAuth
 
         hashed_response["PatronValidateResult"]
       end
+
+      private
+      def ensure_method(method)
+        method ||= "get"
+        normalized_method = method.to_s.upcase.to_sym
+        return METHOD[normalized_method] if METHOD.has_key?(normalized_method)
+
+        available_methods = METHOD.keys.collect {|m| m.inspect}.join(", ")
+        format = "%s is not one of the available connect methods: %s"
+        raise ConfigurationError, format % [method.inspect, available_methods]
+      end
+
+
 
 
     end
