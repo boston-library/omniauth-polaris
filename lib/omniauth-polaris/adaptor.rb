@@ -57,7 +57,7 @@ module OmniAuth
 
         concated_string = @method + @http_uri + barcode + http_date + pin
         sha1_sig = Base64.strict_encode64("#{OpenSSL::HMAC.digest('sha1',@access_key, concated_string)}")
-        xml_response = RestClient.get http_uri, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @access_id + ":" + sha1_sig}
+        xml_response = RestClient.get @http_uri, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @access_id + ":" + sha1_sig}
         hashed_response = Hash.from_xml xml_response
 
         hashed_response["PatronValidateResult"]
