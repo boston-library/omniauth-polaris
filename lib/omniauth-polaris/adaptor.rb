@@ -53,11 +53,13 @@ module OmniAuth
         response = false
         pin = args[:pin]
         barcode = args[:barcode]
+        http_uri_with_barcode =  @http_uri + barcode
+
         http_date = Time.now.in_time_zone("GMT").strftime("%a, %d %b %Y %H:%M:%S %Z")
 
         concated_string = @method + @http_uri + barcode + http_date + pin
         sha1_sig = Base64.strict_encode64("#{OpenSSL::HMAC.digest('sha1',@access_key, concated_string)}")
-        xml_response = RestClient.get @http_uri, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @access_id + ":" + sha1_sig}
+        xml_response = RestClient.get http_uri_with_barcode, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @access_id + ":" + sha1_sig}
         hashed_response = Hash.from_xml xml_response
 
         hashed_response["PatronValidateResult"]
