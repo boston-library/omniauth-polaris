@@ -24,6 +24,7 @@ module OmniAuth
         MUST_HAVE_KEYS.each do |name|
           message << name if configuration[name].nil?
         end
+        puts "here3"
         raise ArgumentError.new(message.join(",") +" MUST be provided") unless message.empty?
       end
 
@@ -52,11 +53,12 @@ module OmniAuth
         pin = args[:pin]
         barcode = args[:barcode]
         http_date = Time.now.in_time_zone("GMT").strftime("%a, %d %b %Y %H:%M:%S %Z")
-
+        puts "here4"
         concated_string = @http_method + @http_uri + barcode + @http_date + pin
         sha1_sig = Base64.strict_encode64("#{OpenSSL::HMAC.digest('sha1',@access_key, concated_string)}")
-
+        puts "here5"
         xml_response = RestClient.get http_uri, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @access_id + ":" + sha1_sig}
+        puts "here6"
         hashed_response = Hash.from_xml xml_response
 
         hashed_response["PatronValidateResult"]
