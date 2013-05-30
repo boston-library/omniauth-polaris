@@ -1,16 +1,22 @@
 require 'omniauth'
 
+
 module OmniAuth
   module Strategies
     class Polaris
       class MissingCredentialsError < StandardError; end
       include OmniAuth::Strategy
       @@config = {
-          'barcode' => 'barcode',
+          'barcode' => 'Barcode',
           'valid_patron' => 'ValidPatron',
           'patron_id' => 'PatronID',
           'assigned_branch_id' => 'AssignedBranchID',
-          'assigned_branch_name' => 'AssignedBranchName'
+          'assigned_branch_name' => 'AssignedBranchName',
+          'first_name' => 'NameFirst',
+          'last_name' => 'NameLast',
+          'middle_name' => 'NameMiddle',
+          'phone_number' => 'PhoneNumber',
+          'email' => 'EmailAddress'
       }
       option :title, "Polaris Authentication" #default title for authentication form
 
@@ -49,6 +55,33 @@ module OmniAuth
         { :raw_info => @polaris_user_info }
       }
 
+      def map_user(mapper, object)
+
+        user = {}
+        mapper.each do |key, value|
+          case value
+            when String
+              #user[key] = object[value.downcase.to_sym].first if object[value.downcase.to_sym]
+              user[key.to_sym] = object[value] if object[value]
+            when Array
+              #value.each {|v| (user[key] = object[v.downcase.to_sym].first; break;) if object[v.downcase.to_sym]}
+              value.each {|v| (user[key] = object[v.downcase.to_sym]; break;) if object[v.downcase.to_sym]}
+            when Hash
+              value.map do |key1, value1|
+                pattern = key1.dup
+                value1.each_with_index do |v,i|
+                  #part = ''; v.collect(&:downcase).collect(&:to_sym).each {|v1| (part = object[v1].first; break;) if object[v1]}
+                  part = ''; v.collect(&:downcase).collect(&:to_sym).each {|v1| (part = object[v1]; break;) if object[v1]}
+                  pattern.gsub!("%#{i}",part||'')
+                end
+                user[key] = pattern
+              end
+          end
+        end
+        user
+      end
+
+
       def self.map_user(mapper, object)
 
         user = {}
@@ -56,7 +89,7 @@ module OmniAuth
           case value
             when String
               #user[key] = object[value.downcase.to_sym].first if object[value.downcase.to_sym]
-              user[key] = object[value.to_sym] if object[value.to_sym]
+              user[key.to_sym] = object[value] if object[value]
             when Array
               #value.each {|v| (user[key] = object[v.downcase.to_sym].first; break;) if object[v.downcase.to_sym]}
               value.each {|v| (user[key] = object[v.downcase.to_sym]; break;) if object[v.downcase.to_sym]}

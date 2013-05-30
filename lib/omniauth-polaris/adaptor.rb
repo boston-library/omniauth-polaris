@@ -51,18 +51,34 @@ module OmniAuth
       public
       def bind_as(args = {})
         response = false
+
+        #Basic shared input variables
         pin = args[:pin]
         barcode = args[:barcode]
-        http_uri_with_barcode =  @http_uri + barcode
-
         http_date = Time.now.in_time_zone("GMT").strftime("%a, %d %b %Y %H:%M:%S %Z")
 
+        #Authorization hash component
+        http_uri_with_barcode =  @http_uri + barcode
         concated_string = @method + @http_uri + barcode + http_date + pin
         sha1_sig = Base64.strict_encode64("#{OpenSSL::HMAC.digest('sha1',@access_key, concated_string)}")
         xml_response = RestClient.get http_uri_with_barcode, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @access_id + ":" + sha1_sig}
-        hashed_response = Hash.from_xml xml_response
+        authorization_response = Hash.from_xml xml_response
 
-        hashed_response["PatronValidateResult"]
+        #Details hash component
+        http_basic_data_get = @http_uri + barcode + '/basicdata'
+        concated_string = @method + http_basic_data_get + http_date + pin
+        sha1_sig = Base64.strict_encode64("#{OpenSSL::HMAC.digest('sha1',@access_key, concated_string)}")
+        xml_response = RestClient.get http_basic_data_get, {'PolarisDate' => http_date, 'Authorization' =>  "PWS " + @access_id + ":" + sha1_sig}
+        details_response = Hash.from_xml xml_response
+
+        #Add some of the basic details to a single hash, using the authorization as the base.
+        authorization_response["PatronValidateResult"]["NameFirst"] = details_response["PatronBasicDataGetResult"]["PatronBasicData"]["NameFirst"]
+        authorization_response["PatronValidateResult"]["NameLast"] = details_response["PatronBasicDataGetResult"]["PatronBasicData"]["NameLast"]
+        authorization_response["PatronValidateResult"]["NameMiddle"] = details_response["PatronBasicDataGetResult"]["PatronBasicData"]["NameMiddle"]
+        authorization_response["PatronValidateResult"]["PhoneNumber"] = details_response["PatronBasicDataGetResult"]["PatronBasicData"]["PhoneNumber"]
+        authorization_response["PatronValidateResult"]["EmailAddress"] = details_response["PatronBasicDataGetResult"]["PatronBasicData"]["EmailAddress"]
+
+        authorization_response["PatronValidateResult"]
       end
 
       private
