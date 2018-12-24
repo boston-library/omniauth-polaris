@@ -82,19 +82,15 @@ module OmniAuth
       end
 
       private
-      def ensure_method(method)
-        method ||= "get"
+
+      def ensure_method(method="get")
         normalized_method = method.to_s.upcase.to_sym
-        return METHOD[normalized_method] if METHOD.has_key?(normalized_method)
+        return METHOD[normalized_method] if METHOD.key?(normalized_method)
 
         available_methods = METHOD.keys.collect {|m| m.inspect}.join(", ")
         format = "%s is not one of the available connect methods: %s"
         raise ConfigurationError, format % [method.inspect, available_methods]
       end
-
-
-
-
     end
   end
 end

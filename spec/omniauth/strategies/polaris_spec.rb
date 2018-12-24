@@ -72,7 +72,6 @@ describe "OmniAuth::Strategies::Polaris" do
       #   should_not raise_error OmniAuth::Strategies::Polaris::MissingCredentialsError
       # end
       it 'should map user info' do
-        awesome_print auth_hash
         expect(auth_hash.info.barcode).to eq('29999999999999')
         expect(auth_hash.info.valid_patron).to eq('true')
         expect(auth_hash.info.patron_id).to eq('111111')
