@@ -6,6 +6,7 @@ require 'rspec'
 require 'rack/test'
 require 'omniauth'
 require 'omniauth-polaris'
+require 'awesome_print'
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
