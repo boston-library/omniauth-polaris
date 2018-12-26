@@ -1,4 +1,4 @@
-require 'omniauth'
+require 'omniauth' unless defined? OmniAuth
 
 module OmniAuth
   module Strategies

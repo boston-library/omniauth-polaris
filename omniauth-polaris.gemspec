@@ -13,9 +13,10 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '~> 2.4'
 
-  gem.add_dependency 'omniauth', '~> 1.9.0'
+
   gem.add_dependency 'rest-client', '~> 2.0.2'
 
+  gem.add_development_dependency 'omniauth', '~> 1.8.1'
   gem.add_development_dependency 'bundler', '>= 1.3.0'
   gem.add_development_dependency 'awesome_print'
   gem.add_development_dependency 'rspec', '~> 3.8'
