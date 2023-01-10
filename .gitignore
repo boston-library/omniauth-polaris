@@ -50,7 +50,7 @@ Icon?
 ehthumbs.db
 .idea # Rubymine config files
 /.idea/*
-
+.ruby-version
 # Directories to ignore #
 #########################
 /public/data/*
