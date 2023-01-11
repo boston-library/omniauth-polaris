@@ -1,10 +1,21 @@
-#!/usr/bin/env rake
 # frozen_string_literal: true
 
-# Add your own tasks in files placed in lib/tasks ending in .rake,
-# for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
+require 'bundler/gem_tasks'
+require 'rspec/core/rake_task'
 
-unless Dir[File.expand_path('../config/application', __FILE__)].empty?
-  require File.expand_path('../config/application', __FILE__)
-  OmniauthPolaris::Application.load_tasks
+RSpec::Core::RakeTask.new(:spec)
+
+begin
+  require 'rubocop/rake_task'
+  RuboCop::RakeTask.new(:rubocop) do |task|
+    task.requires << 'rubocop-rspec'
+    task.requires << 'rubocop-performance'
+    task.fail_on_error = true
+  end
+rescue LoadError
+  task :rubocop do
+    warn 'Rubocop is disabled'
+  end
 end
+
+task :default => [:rubocop, :spec]

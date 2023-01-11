@@ -4,6 +4,7 @@ module OmniAuth
   module Strategies
     class Polaris
       class MissingCredentialsError < StandardError; end
+      class InvalidCredentialsError < StandardError; end
 
       include OmniAuth::Strategy
 
@@ -23,7 +24,7 @@ module OmniAuth
       option :title, 'Polaris Authentication' #default title for authentication form
 
       def request_phase
-        OmniAuth::Polaris::Adaptor.validate @options
+        OmniAuth::Polaris::Adaptor.validate!(@options)
 
         OmniAuth::Form.build(title: options.fetch(:title, 'Polaris Authentication'), url: callback_path) do |f|
           f.text_field 'Barcode', 'barcode'
@@ -33,24 +34,27 @@ module OmniAuth
       end
 
       def callback_phase
-        @adaptor = OmniAuth::Polaris::Adaptor.new @options
+        @adaptor = OmniAuth::Polaris::Adaptor.new(@options)
 
-        raise MissingCredentialsError.new('Missing login credentials') if request['barcode'].nil? || request['pin'].nil?
+        fail(MissingCredentialsError, 'Missing login credentials') if %w(barcode pin).any? { |request_key| request.params[request_key].blank? }
 
-        begin
-          @polaris_user_info = @adaptor.bind_as(:barcode => request['barcode'], :pin => request['pin'])
-          return fail!(:invalid_credentials) if !@polaris_user_info
+        @polaris_user_info = @adaptor.bind_as(barcode: request.params['barcode'], pin: request.params['pin'])
 
-          @user_info = self.class.map_user(@polaris_user_info)
+        fail(InvalidCredentialsError, 'Invalid User Credentials!') if @polaris_user_info.blank?
 
-          super
-        rescue Exception => e
-          return fail!(:polaris_error, e)
-        end
+        @user_info = self.class.map_user(@polaris_user_info)
+
+        super
+      rescue MissingCredentialsError => e
+        fail!(:missing_credentials, e)
+      rescue InvalidCredentialsError => e
+        fail!(:invalid_credentials, e)
+      rescue Exception => e
+        fail!(:polaris_error, e)
       end
 
       uid do
-        request['barcode']
+        request.params['barcode']
       end
 
       info do
@@ -61,21 +65,21 @@ module OmniAuth
         { raw_info: @polaris_user_info }
       end
 
-      def self.map_user(object)
+
+      def self.map_user(polaris_user_info)
         user = {}
-        CONFIG.dup.each do |key, value|
+
+        CONFIG.each do |key, value|
           case value
           when String
-            user[key.to_sym] = object[value.to_sym] if object[value.to_sym]
+            user[key.to_sym] = polaris_user_info[value.to_sym] if polaris_user_info[value.to_sym]
           when Array
-            #value.each {|v| (user[key] = object[v.downcase.to_sym].first; break;) if object[v.downcase.to_sym]}
-            value.each {|v| (user[key] = object[v.downcase.to_sym]; break;) if object[v.downcase.to_sym]}
+            value.each {|v| (user[key] = polaris_user_info[v.downcase.to_sym]; break;) if polaris_user_info[v.downcase.to_sym]}
           when Hash
             value.map do |key1, value1|
               pattern = key1.dup
-              value1.each_with_index do |v,i|
-                #part = ''; v.collect(&:downcase).collect(&:to_sym).each {|v1| (part = object[v1].first; break;) if object[v1]}
-                part = ''; v.collect(&:downcase).collect(&:to_sym).each { |v1| (part = object[v1]; break;) if object[v1] }
+              value1.each_with_index do |v, i|
+                part = ''; v.collect(&:downcase).collect(&:to_sym).each { |v1| (part = polaris_user_info[v1]; break;) if polaris_user_info[v1] }
                 pattern.gsub!("%#{i}", part || '')
               end
               user[key] = pattern
