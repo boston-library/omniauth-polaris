@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
   gem.summary = 'A Polaris API strategy for OmniAuth.'
   gem.homepage = 'https://github.com/boston-library/omniauth-polaris'
 
-  gem.required_ruby_version = '>= 2.6'
+  gem.required_ruby_version = '>= 2.6.10'
 
   gem.add_dependency 'activesupport', '< 7'
   gem.add_dependency 'http', '~> 5.1'
