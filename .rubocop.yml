@@ -13,8 +13,12 @@ inherit_from: .rubocop_todo.yml
 
 AllCops:
   TargetRubyVersion: 2.7
+  NewCops: enable
   Exclude:
     - 'scratch.rb'
+
+Gemspec/RequireMFA:
+  Enabled: false
 
 RSpec/MultipleExpectations:
   Enabled: true

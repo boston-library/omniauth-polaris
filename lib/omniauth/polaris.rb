@@ -2,6 +2,9 @@
 
 require 'active_support'
 require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/time'
+require 'active_support/core_ext/integer/time'
+require 'active_support/core_ext/hash/conversions'
 require 'base64'
 require 'cgi'
 require 'openssl'

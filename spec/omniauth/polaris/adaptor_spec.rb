@@ -7,7 +7,7 @@ describe 'OmniAuth::Polaris::Adaptor' do
     let!(:patron_url) { 'http://blah.org/PAPIService/REST/public/v1/1000/100/1/patron/' }
 
     it 'is expected to throw exception when must have field is not set' do
-      expect{ OmniAuth::Polaris::Adaptor.new( { http_uri: patron_url, method: 'POST' }) }.to raise_error(OmniAuth::Polaris::ConfigurationError)
+      expect { OmniAuth::Polaris::Adaptor.new({ http_uri: patron_url, method: 'POST' }) }.to raise_error(OmniAuth::Polaris::ConfigurationError)
     end
 
     it 'is expected to throw exception when method is not supported' do

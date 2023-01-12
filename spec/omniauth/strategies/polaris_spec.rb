@@ -47,33 +47,51 @@ describe 'OmniAuth::Strategies::Polaris' do
       allow(OmniAuth::Polaris::Adaptor).to receive(:new).and_return(adaptor)
     end
 
-    let!(:adaptor) { double(OmniAuth::Polaris::Adaptor, { barcode: '29999999999999' }) }
+    let!(:adaptor) { instance_double(OmniAuth::Polaris::Adaptor) }
 
     context 'when failure' do
       before do
-        allow(adaptor).to receive(:bind_as).and_return(nil)
+        allow(adaptor).to receive(:authenticate_patron).and_return(nil)
       end
 
       it 'is expected to fail! with :missing_credentials' do
         post('/auth/polaris/callback', {})
         expect(last_request.env['omniauth.error']).to be_a_kind_of(OmniAuth::Strategies::Polaris::MissingCredentialsError)
-        expect(last_request.env['omniauth.error.type']).to eql(:missing_credentials)
+        expect(last_request.env['omniauth.error.type']).to be(:missing_credentials)
       end
 
       it 'is expected to redirect to error page' do
         post('/auth/polaris/callback', { barcode: 'ping', pin: 'password' })
         expect(last_response).to be_redirect
-        expect(last_response.headers['Location']).to match(%r{invalid_credentials})
+        expect(last_response.headers['Location']).to match(/invalid_credentials/)
       end
     end
 
     context 'when successful' do
       let(:auth_hash) { last_request.env['omniauth.auth'] }
+      let(:patron_user_hash) do
+        {
+          'PAPIErrorCode' => '0',
+          'Barcode' => '29999999999999',
+          'ValidPatron' => 'true',
+          'PatronID' => '111111',
+          'PatronCodeID' => '27',
+          'AssignedBranchID' => '3',
+          'PatronBarcode' => '29999999999999',
+          'AssignedBranchName' => 'BPL - Central',
+          'ExpirationDate' => '2026-02-19T00:00:00',
+          'OverridePasswordUsed' => 'false',
+          'NameFirst' => 'Test',
+          'NameLast' => 'Patron',
+          'NameMiddle' => '',
+          'EmailAddress' => 'test.patron@example.com',
+          'PhoneNumber' => '555-555-5555'
+        }
+      end
 
       before do
-        allow(adaptor).to receive(:bind_as).and_return({:PAPIErrorCode => '0', :barcode => '29999999999999', :ValidPatron => 'true', :PatronID => '111111', :PatronCodeID => '27',
-                                            :AssignedBranchID => '3', :PatronBarcode => '29999999999999', :AssignedBranchName => 'BPL - Central', :ExpirationDate => '2015-09-20T00:00:00', :OverridePasswordUsed =>'false' })
-        post('/auth/polaris/callback', { barcode: '29999021413588', pin: '0407' })
+        allow(adaptor).to receive(:authenticate_patron).and_return(patron_user_hash)
+        post('/auth/polaris/callback', { barcode: '29999999999999', pin: '12345678' })
       end
 
       it 'is expected to map user info' do

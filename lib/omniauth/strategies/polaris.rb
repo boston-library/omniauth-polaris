@@ -8,20 +8,26 @@ module OmniAuth
 
       include OmniAuth::Strategy
 
-      CONFIG = {
-          'barcode' => 'barcode',
-          'valid_patron' => 'ValidPatron',
-          'patron_id' => 'PatronID',
-          'assigned_branch_id' => 'AssignedBranchID',
-          'assigned_branch_name' => 'AssignedBranchName',
-          'first_name' => 'NameFirst',
-          'last_name' => 'NameLast',
-          'middle_name' => 'NameMiddle',
-          'phone_number' => 'PhoneNumber',
-          'email' => 'EmailAddress'
+      USER_MAP = {
+        'barcode' => 'Barcode',
+        'valid_patron' => 'ValidPatron',
+        'patron_id' => 'PatronID',
+        'assigned_branch_id' => 'AssignedBranchID',
+        'assigned_branch_name' => 'AssignedBranchName',
+        'first_name' => 'NameFirst',
+        'last_name' => 'NameLast',
+        'middle_name' => 'NameMiddle',
+        'phone_number' => 'PhoneNumber',
+        'email' => 'EmailAddress'
       }.freeze
 
-      option :title, 'Polaris Authentication' #default title for authentication form
+      def self.map_user(polaris_user_info)
+        USER_MAP.each_with_object({}) do |(user_key, polaris_user_key), user_hash|
+          user_hash[user_key.to_sym] = polaris_user_info[polaris_user_key] if polaris_user_info[polaris_user_key].present?
+        end
+      end
+
+      option :title, 'Polaris Authentication' # default title for authentication form
 
       def request_phase
         OmniAuth::Polaris::Adaptor.validate!(@options)
@@ -33,12 +39,13 @@ module OmniAuth
         end.to_response
       end
 
+      # rubocop:disable Style/SignalException
       def callback_phase
         @adaptor = OmniAuth::Polaris::Adaptor.new(@options)
 
-        fail(MissingCredentialsError, 'Missing login credentials') if %w(barcode pin).any? { |request_key| request.params[request_key].blank? }
+        fail(MissingCredentialsError, 'Missing login credentials') if %w[barcode pin].any? { |request_key| request.params[request_key].blank? }
 
-        @polaris_user_info = @adaptor.bind_as(barcode: request.params['barcode'], pin: request.params['pin'])
+        @polaris_user_info = @adaptor.authenticate_patron(pin: request.params['pin'], barcode: request.params['barcode'])
 
         fail(InvalidCredentialsError, 'Invalid User Credentials!') if @polaris_user_info.blank?
 
@@ -49,12 +56,13 @@ module OmniAuth
         fail!(:missing_credentials, e)
       rescue InvalidCredentialsError => e
         fail!(:invalid_credentials, e)
-      rescue Exception => e
+      rescue StandardError => e
         fail!(:polaris_error, e)
       end
+      # rubocop:enable Style/SignalException
 
       uid do
-        request.params['barcode']
+        @user_info[:barcode]
       end
 
       info do
@@ -63,30 +71,6 @@ module OmniAuth
 
       extra do
         { raw_info: @polaris_user_info }
-      end
-
-
-      def self.map_user(polaris_user_info)
-        user = {}
-
-        CONFIG.each do |key, value|
-          case value
-          when String
-            user[key.to_sym] = polaris_user_info[value.to_sym] if polaris_user_info[value.to_sym]
-          when Array
-            value.each {|v| (user[key] = polaris_user_info[v.downcase.to_sym]; break;) if polaris_user_info[v.downcase.to_sym]}
-          when Hash
-            value.map do |key1, value1|
-              pattern = key1.dup
-              value1.each_with_index do |v, i|
-                part = ''; v.collect(&:downcase).collect(&:to_sym).each { |v1| (part = polaris_user_info[v1]; break;) if polaris_user_info[v1] }
-                pattern.gsub!("%#{i}", part || '')
-              end
-              user[key] = pattern
-            end
-          end
-        end
-        user
       end
     end
   end
