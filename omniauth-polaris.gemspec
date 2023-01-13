@@ -7,7 +7,7 @@ Gem::Specification.new do |gem|
   gem.name = 'omniauth-polaris'
   gem.version = OmniAuth::Polaris::VERSION.dup
   gem.authors = ['Steven Anderson', 'Ben Barber']
-  gem.email = ['sanderson@bpl.org', 'bbarber@bpl.org']
+  gem.email = ['digital@bpl.org', 'bbarber@bpl.org']
   gem.description = 'A Polaris API strategy for OmniAuth.'
   gem.summary = 'A Polaris API strategy for OmniAuth.'
   gem.homepage = 'https://github.com/boston-library/omniauth-polaris'

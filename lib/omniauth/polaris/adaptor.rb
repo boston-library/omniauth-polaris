@@ -43,7 +43,7 @@ module OmniAuth
 
       def authenticate_patron(pin:, barcode:)
         # According to the polaris api docs "Date must be within +/- 30 minutes of current time or request will fail"
-        http_date = 30.minutes.from_now.in_time_zone('GMT').strftime('%a, %d %b %Y %H:%M:%S %Z')
+        http_date = 15.minutes.from_now.in_time_zone('GMT').strftime('%a, %d %b %Y %H:%M:%S %Z')
 
         # Authorization hash component
         authorization_hash = authorization_response(pin, barcode, http_date)
