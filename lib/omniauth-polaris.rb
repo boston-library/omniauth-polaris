@@ -1,3 +1,3 @@
-require 'omniauth-polaris/version'
-require 'omniauth-polaris/adaptor'
-require 'omniauth/strategies/polaris'
+# frozen_string_literal: true
+
+require 'omniauth/polaris'

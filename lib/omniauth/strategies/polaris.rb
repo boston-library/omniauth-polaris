@@ -1,108 +1,76 @@
-require 'omniauth' unless defined? OmniAuth
+# frozen_string_literal: true
 
 module OmniAuth
   module Strategies
     class Polaris
       class MissingCredentialsError < StandardError; end
-      include OmniAuth::Strategy
-      @@config = {
-          'barcode' => 'barcode',
-          'valid_patron' => 'ValidPatron',
-          'patron_id' => 'PatronID',
-          'assigned_branch_id' => 'AssignedBranchID',
-          'assigned_branch_name' => 'AssignedBranchName',
-          'first_name' => 'NameFirst',
-          'last_name' => 'NameLast',
-          'middle_name' => 'NameMiddle',
-          'phone_number' => 'PhoneNumber',
-          'email' => 'EmailAddress'
-      }
-      option :title, "Polaris Authentication" #default title for authentication form
+      class InvalidCredentialsError < StandardError; end
 
+      include OmniAuth::Strategy
+
+      USER_MAP = {
+        'barcode' => 'Barcode',
+        'valid_patron' => 'ValidPatron',
+        'patron_id' => 'PatronID',
+        'assigned_branch_id' => 'AssignedBranchID',
+        'assigned_branch_name' => 'AssignedBranchName',
+        'first_name' => 'NameFirst',
+        'last_name' => 'NameLast',
+        'middle_name' => 'NameMiddle',
+        'phone_number' => 'PhoneNumber',
+        'email' => 'EmailAddress'
+      }.freeze
+
+      def self.map_user(polaris_user_info)
+        USER_MAP.each_with_object({}) do |(user_key, polaris_user_key), user_hash|
+          user_hash[user_key.to_sym] = polaris_user_info[polaris_user_key] if polaris_user_info[polaris_user_key].present?
+        end
+      end
+
+      option :title, 'Polaris Authentication' # default title for authentication form
 
       def request_phase
-        OmniAuth::Polaris::Adaptor.validate @options
-        f = OmniAuth::Form.new(:title => (options[:title] || "Polaris Authentication"), :url => callback_path)
-        f.text_field 'Barcode', 'barcode'
-        f.password_field 'PIN', 'pin'
-        f.button "Sign In"
-        f.to_response
+        OmniAuth::Polaris::Adaptor.validate!(@options)
+
+        OmniAuth::Form.build(title: options.fetch(:title, 'Polaris Authentication'), url: callback_path) do |f|
+          f.text_field 'Barcode', 'barcode'
+          f.password_field 'PIN', 'pin'
+          f.button 'Sign In'
+        end.to_response
       end
 
+      # rubocop:disable Style/SignalException
       def callback_phase
-        @adaptor = OmniAuth::Polaris::Adaptor.new @options
+        @adaptor = OmniAuth::Polaris::Adaptor.new(@options)
 
-        raise MissingCredentialsError.new("Missing login credentials") if request['barcode'].nil? || request['pin'].nil?
-        begin
-          @polaris_user_info = @adaptor.bind_as(:barcode => request['barcode'], :pin => request['pin'])
-          return fail!(:invalid_credentials) if !@polaris_user_info
+        fail(MissingCredentialsError, 'Missing login credentials') if %w[barcode pin].any? { |request_key| request.params[request_key].blank? }
 
-          @user_info = self.class.map_user(@@config, @polaris_user_info)
-          super
-        rescue Exception => e
-          return fail!(:polaris_error, e)
-        end
+        @polaris_user_info = @adaptor.authenticate_patron(pin: request.params['pin'], barcode: request.params['barcode'])
+
+        fail(InvalidCredentialsError, 'Invalid User Credentials!') if @polaris_user_info.blank?
+
+        @user_info = self.class.map_user(@polaris_user_info)
+
+        super
+      rescue MissingCredentialsError => e
+        fail!(:missing_credentials, e)
+      rescue InvalidCredentialsError => e
+        fail!(:invalid_credentials, e)
+      rescue StandardError => e
+        fail!(:polaris_error, e)
+      end
+      # rubocop:enable Style/SignalException
+
+      uid do
+        @user_info[:barcode]
       end
 
-      uid {
-        request['barcode']
-      }
-      info {
+      info do
         @user_info
-      }
-      extra {
-        { :raw_info => @polaris_user_info }
-      }
+      end
 
-      # def map_user(mapper, object)
-      #   Ben 12/24/2018 Doesnt appear this method is in use
-      #   user = {}
-      #   mapper.each do |key, value|
-      #     case value
-      #       when String
-      #         #user[key] = object[value.downcase.to_sym].first if object[value.downcase.to_sym]
-      #         user[key.to_sym] = object[value] if object[value]
-      #       when Array
-      #         #value.each {|v| (user[key] = object[v.downcase.to_sym].first; break;) if object[v.downcase.to_sym]}
-      #         value.each {|v| (user[key] = object[v.downcase.to_sym]; break;) if object[v.downcase.to_sym]}
-      #       when Hash
-      #         value.map do |key1, value1|
-      #           pattern = key1.dup
-      #           value1.each_with_index do |v,i|
-      #             #part = ''; v.collect(&:downcase).collect(&:to_sym).each {|v1| (part = object[v1].first; break;) if object[v1]}
-      #             part = ''; v.collect(&:downcase).collect(&:to_sym).each {|v1| (part = object[v1]; break;) if object[v1]}
-      #             pattern.gsub!("%#{i}", part || '')
-      #           end
-      #           user[key] = pattern
-      #         end
-      #     end
-      #   end
-      #   user
-      # end
-
-
-      def self.map_user(mapper, object)
-        user = {}
-        mapper.each do |key, value|
-          case value.class.to_s
-          when String
-            user[key.to_sym] = object[value.to_sym] if object[value.to_sym]
-          when Array
-            #value.each {|v| (user[key] = object[v.downcase.to_sym].first; break;) if object[v.downcase.to_sym]}
-            value.each {|v| (user[key] = object[v.downcase.to_sym]; break;) if object[v.downcase.to_sym]}
-          when Hash
-            value.map do |key1, value1|
-              pattern = key1.dup
-              value1.each_with_index do |v,i|
-                #part = ''; v.collect(&:downcase).collect(&:to_sym).each {|v1| (part = object[v1].first; break;) if object[v1]}
-                part = ''; v.collect(&:downcase).collect(&:to_sym).each {|v1| (part = object[v1]; break;) if object[v1]}
-                pattern.gsub!("%#{i}", part || '')
-              end
-              user[key] = pattern
-            end
-          end
-        end
-        user
+      extra do
+        { raw_info: @polaris_user_info }
       end
     end
   end

@@ -50,14 +50,14 @@ Icon?
 ehthumbs.db
 .idea # Rubymine config files
 /.idea/*
-
+.ruby-version
 # Directories to ignore #
 #########################
 /public/data/*
 /jetty/*
 /solr_conf/*
 /fedora_conf/*
-
+scratch.rb
 # Ignore edited Linux files #
 #############################
 
