@@ -38,7 +38,7 @@ module OmniAuth
         }
 
         ensure_method!(@method)
-        @polaris_method = METHOD[@method]
+        @polaris_method = METHOD[@method.to_s.to_sym]
       end
 
       def authenticate_patron(pin:, barcode:)
@@ -63,14 +63,14 @@ module OmniAuth
       protected
 
       def authorization_response(pin, barcode, request_date)
-        patron_validate_uri = "#{@http_uri}/patron/#{barcode}"
+        patron_validate_uri = "#{@http_uri}#{barcode}"
         validation_concated_string = "#{@polaris_method}#{patron_validate_uri}#{request_date}#{pin}"
         polaris_get_xml_response(patron_validate_uri, request_date, validation_concated_string)
       end
 
       def details_response(pin, barcode, request_date)
         patron_basic_data_uri = "#{@http_uri}#{barcode}/basicdata"
-        details_concated_string = "#{@polaris_method}#{http_basic_data_uri}#{request_date}#{pin}"
+        details_concated_string = "#{@polaris_method}#{patron_basic_data_uri}#{request_date}#{pin}"
         polaris_get_xml_response(patron_basic_data_uri, request_date, details_concated_string)
       end
 
