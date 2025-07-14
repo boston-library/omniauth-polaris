@@ -25,7 +25,7 @@ describe 'OmniAuth::Strategies::Polaris' do
     before { post '/auth/polaris' }
 
     it 'is expected to display a form' do
-      expect(last_response.status).to be(200)
+      expect(last_response).to have_http_status(:ok)
       expect(last_response.body).to include('<form')
     end
 
@@ -56,7 +56,7 @@ describe 'OmniAuth::Strategies::Polaris' do
 
       it 'is expected to fail! with :missing_credentials' do
         post('/auth/polaris/callback', {})
-        expect(last_request.env['omniauth.error']).to be_a_kind_of(OmniAuth::Strategies::Polaris::MissingCredentialsError)
+        expect(last_request.env['omniauth.error']).to be_a(OmniAuth::Strategies::Polaris::MissingCredentialsError)
         expect(last_request.env['omniauth.error.type']).to be(:missing_credentials)
       end
 
