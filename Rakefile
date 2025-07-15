@@ -8,8 +8,6 @@ RSpec::Core::RakeTask.new(:spec)
 begin
   require 'rubocop/rake_task'
   RuboCop::RakeTask.new(:rubocop) do |task|
-    task.requires << 'rubocop-rspec'
-    task.requires << 'rubocop-performance'
     task.fail_on_error = true
   end
 rescue LoadError

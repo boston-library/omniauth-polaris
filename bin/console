@@ -3,7 +3,7 @@
 # frozen_string_literal: true
 
 require 'bundler/setup'
-require 'pry'
 require 'omniauth-polaris'
 
-Pry.start
+require 'irb'
+IRB.start(__FILE__)

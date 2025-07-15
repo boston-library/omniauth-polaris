@@ -2,9 +2,13 @@
 
 source 'https://rubygems.org'
 
-gem 'rubocop', '~> 1.31', require: false
-gem 'rubocop-performance', '~> 1.15', require: false
-gem 'rubocop-rspec', '~> 2.12', require: false
+gem 'bundler', '>= 2.4'
+gem 'irb'
+gem 'rdoc'
+gem 'rspec', '~> 3.12'
+gem 'rubocop', '~> 1.78', require: false
+gem 'rubocop-performance', '~> 1.25', require: false
+gem 'rubocop-rspec', '~> 3.5', require: false
 
 gemspec
 

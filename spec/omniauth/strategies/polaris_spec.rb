@@ -56,7 +56,7 @@ describe 'OmniAuth::Strategies::Polaris' do
 
       it 'is expected to fail! with :missing_credentials' do
         post('/auth/polaris/callback', {})
-        expect(last_request.env['omniauth.error']).to be_a_kind_of(OmniAuth::Strategies::Polaris::MissingCredentialsError)
+        expect(last_request.env['omniauth.error']).to be_a(OmniAuth::Strategies::Polaris::MissingCredentialsError)
         expect(last_request.env['omniauth.error.type']).to be(:missing_credentials)
       end
 

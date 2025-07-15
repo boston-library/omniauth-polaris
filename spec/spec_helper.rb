@@ -8,8 +8,6 @@ ENV['RACK_ENV'] ||= 'test'
 require 'simplecov'
 SimpleCov.start
 
-require 'pry'
-require 'awesome_print'
 require 'rspec'
 require 'rack/test'
 require 'omniauth-polaris'
